@@ -11,7 +11,7 @@ class WebServerHandler(BaseHTTPRequestHandler):
                 output += "<form method = 'POST' enctype='multipart/form-data' action='/hello'>"
                 output += "<h2> What would you like me to say?</h2>"
                 output += "<input name='message' type = 'text'>"
-                output += "<input type='submit' value='Submit'"
+                output += "<input type='submit' value='Submit'>"
                 output += "</form></body></html>"
                 self.write_body(output)
 
@@ -26,22 +26,23 @@ class WebServerHandler(BaseHTTPRequestHandler):
         try:
             self.write_headers()
 
-            ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))
+            ctype, pdict = cgi.parse_header(self.headers['content-type'])
+            pdict['boundary'] = bytes(pdict['boundary'], "utf-8")
             if ctype == 'multipart/form-data':
                 fields = cgi.parse_multipart(self.rfile, pdict)
                 messagecontent = fields.get('message')
 
             output = "<html><body>"
             output += "<h2>OK, how about this: </h2>"
-            output += "<h1> %s </h1>" % messagecontent[0]
+            output += "<h1> %s </h1>" % messagecontent[0].decode()
             output += "<form method = 'POST' enctype='multipart/form-data' action='/hello'>"
             output += "<h2> What would you like me to say?</h2>"
             output += "<input name='message' type = 'text'>"
-            output += "<input type='submit' value='Submit'"
+            output += "<input type='submit' value='Submit'>"
             output += "</form></body></html>"
             self.write_body(output)
-        except:
-            pass
+        except Exception as e:
+            print(e)
 
     def write_headers(self):
         self.send_response(200)
