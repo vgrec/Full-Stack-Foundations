@@ -1,7 +1,6 @@
+from database_setup import Restaurant, Base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-
-from database_setup import Restaurant, Base, MenuItem
 
 
 class RestaurantsRepository:
@@ -15,6 +14,10 @@ class RestaurantsRepository:
     def get_restaurants(self):
         return self.session.query(Restaurant).all()
 
+    def new_restaurant(self, restaurant_name):
+        self.session.add(Restaurant(name=restaurant_name))
+        self.session.commit()
+
 
 r = RestaurantsRepository()
-print(r.get_restaurants())
+r.new_restaurant("Alibaba")
