@@ -9,6 +9,4 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
-burger = session.query(MenuItem).filter_by(id=48).one()
-session.delete(burger)
-session.commit()
+print(session.query(Restaurant)[2].name)
