@@ -10,27 +10,28 @@ class WebServerHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         try:
             if self.path.endswith("/restaurants"):
-                self.show_restaurants()
-            elif self.path.endswith("/restaurants/new"):
-                self.show_add_new_restaurant()
+                self.show_restaurants_page()
+                return
+
+            if self.path.endswith("/restaurants/new"):
+                self.show_add_new_restaurant_page()
+                return
+
+            if self.path.endswith("/edit"):
+                self.show_edit_page(self.path)
+                return
         except IOError:
             self.send_error(404, "File Not Found %s" % self.path)
 
     def do_POST(self):
         try:
             if self.path.endswith("/restaurants/new"):
-                ctype, pdict = cgi.parse_header(self.headers['content-type'])
-                pdict['boundary'] = bytes(pdict['boundary'], "utf-8")
-                if ctype == 'multipart/form-data':
-                    fields = cgi.parse_multipart(self.rfile, pdict)
-                    messagecontent = fields.get('message')
-                    repository = RestaurantsRepository()
-                    repository.new_restaurant(messagecontent[0].decode())
+                self.create_new_restaurant()
+                return
 
-                self.send_response(301)
-                self.send_header('Content-type', 'text/html')
-                self.send_header('Location', '/restaurants')
-                self.end_headers()
+            if self.path.endswith("/edit"):
+                self.edit_restaurant(self.path)
+                return
 
         except Exception as e:
             print(e)
@@ -43,7 +44,7 @@ class WebServerHandler(BaseHTTPRequestHandler):
     def write_body(self, output):
         self.wfile.write(output.encode())
 
-    def show_restaurants(self):
+    def show_restaurants_page(self):
         self.write_headers()
         repository = RestaurantsRepository()
 
@@ -54,7 +55,7 @@ class WebServerHandler(BaseHTTPRequestHandler):
         for restaurant in restaurants:
             output += restaurant.name
             output += "<br/>"
-            output += "<a href='#'>Edit</a>"
+            output += "<a href='/restaurants/%s/edit'>Edit</a>" % restaurant.id
             output += "<br/>"
             output += "<a href='#'>Delete</a>"
             output += "<br/><br/>"
@@ -62,7 +63,7 @@ class WebServerHandler(BaseHTTPRequestHandler):
 
         self.write_body(output)
 
-    def show_add_new_restaurant(self):
+    def show_add_new_restaurant_page(self):
         self.write_headers()
         output = "<html><body>"
         output += "<h3>Add a new restaurant</h3>"
@@ -75,6 +76,54 @@ class WebServerHandler(BaseHTTPRequestHandler):
         output += "</body></html>"
 
         self.write_body(output)
+
+    def show_edit_page(self, path):
+        self.write_headers()
+        repository = RestaurantsRepository()
+
+        restaurant_id = path[len("/restaurants/"): path.find("/edit")]
+        restaurant = repository.get_restaurant_by_id(restaurant_id)
+
+        output = "<html><body>"
+        output += "<h3>%s</h3>" % restaurant.name
+        output += "<br/><br/>"
+        output += "<form method = 'POST' enctype='multipart/form-data' action='/restaurants/%s/edit'>" % restaurant_id
+        output += "<input name='message' type = 'text' placeholder='%s'>" % restaurant.name
+        output += "<input type='submit' value='Rename'>"
+        output += "</form>"
+        output += "</body></html>"
+
+        self.write_body(output)
+
+    def create_new_restaurant(self):
+        ctype, pdict = cgi.parse_header(self.headers['content-type'])
+        pdict['boundary'] = bytes(pdict['boundary'], "utf-8")
+        if ctype == 'multipart/form-data':
+            fields = cgi.parse_multipart(self.rfile, pdict)
+            messagecontent = fields.get('message')
+            repository = RestaurantsRepository()
+            repository.new_restaurant(messagecontent[0].decode())
+
+        self.send_response(301)
+        self.send_header('Content-type', 'text/html')
+        self.send_header('Location', '/restaurants')
+        self.end_headers()
+
+    def edit_restaurant(self, path):
+        ctype, pdict = cgi.parse_header(self.headers['content-type'])
+        pdict['boundary'] = bytes(pdict['boundary'], "utf-8")
+        if ctype == 'multipart/form-data':
+            fields = cgi.parse_multipart(self.rfile, pdict)
+            new_name = fields.get('message')
+            restaurant_id = path[len("/restaurants/"): path.find("/edit")]
+
+            repository = RestaurantsRepository()
+            repository.update_restaurant(restaurant_id, new_name[0].decode())
+
+        self.send_response(301)
+        self.send_header('Content-type', 'text/html')
+        self.send_header('Location', '/restaurants')
+        self.end_headers()
 
 
 def main():

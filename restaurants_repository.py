@@ -18,6 +18,16 @@ class RestaurantsRepository:
         self.session.add(Restaurant(name=restaurant_name))
         self.session.commit()
 
+    def get_restaurant_by_id(self, id):
+        return self.session.query(Restaurant).filter_by(id=id).first()
+
+    def update_restaurant(self, id, name):
+        restaurant = self.get_restaurant_by_id(id)
+        restaurant.name = name
+        self.session.commit()
 
 r = RestaurantsRepository()
-r.new_restaurant("Alibaba")
+
+r.update_restaurant(3, "Hola")
+
+print(r.get_restaurant_by_id(3).name)
