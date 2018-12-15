@@ -1,6 +1,6 @@
 from flask import Flask
 from flask import render_template
-from flask import request, url_for, redirect
+from flask import request, url_for, redirect, flash
 from restaurants_repository import RestaurantsRepository
 from database_setup import MenuItem
 
@@ -26,6 +26,7 @@ def new_menu_item(restaurant_id):
             price=request.form['price'],
             restaurant_id=restaurant_id)
         repository.new_menu_item(new_item)
+        flash("New menu item created!")
         return redirect(url_for('home', restaurant_id=restaurant_id))
     else:
         return render_template("new_menu_item.html", restaurant_id=restaurant_id)
@@ -59,5 +60,6 @@ def template():
 
 
 if __name__ == '__main__':
+    app.secret_key = "test_key"
     app.debug = True
     app.run(host='0.0.0.0', port=5000)
