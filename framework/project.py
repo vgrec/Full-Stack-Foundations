@@ -11,7 +11,7 @@ app = Flask(__name__)
 @app.route('/restaurants/<int:restaurant_id>/')
 def home(restaurant_id):
     repository = RestaurantsRepository()
-    items = repository.get_menu(restaurant_id)
+    items = repository.get_restaurant_menu(restaurant_id)
     restaurant = repository.get_restaurant_by_id(restaurant_id)
     return render_template('menu.html', restaurant=restaurant, items=items)
 
@@ -31,9 +31,21 @@ def new_menu_item(restaurant_id):
         return render_template("new_menu_item.html", restaurant_id=restaurant_id)
 
 
-@app.route('/restaurant/<int:restaurant_id>/<int:menu_id>/edit/')
+@app.route('/restaurant/<int:restaurant_id>/<int:menu_id>/edit/', methods=['GET', 'POST'])
 def edit_menu_item(restaurant_id, menu_id):
-    return "page to edit a menu item. Task 2 complete!"
+    repository = RestaurantsRepository()
+    menu = repository.get_menu_by_id(restaurant_id, menu_id)
+    if request.method == 'POST':
+        edited_item = MenuItem(
+            id=menu_id,
+            name=request.form['name'],
+            description=request.form['description'],
+            price=request.form['price'],
+            restaurant_id=restaurant_id)
+        repository.update_menu_item(edited_item)
+        return redirect(url_for('home', restaurant_id=restaurant_id))
+    else:
+        return render_template('edit_menu_item.html', restaurant_id=restaurant_id, menu=menu)
 
 
 @app.route('/restaurant/<int:restaurant_id>/<int:menu_id>/delete/')
