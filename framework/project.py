@@ -1,6 +1,8 @@
 from flask import Flask
 from flask import render_template
+from flask import request, url_for, redirect
 from restaurants_repository import RestaurantsRepository
+from database_setup import MenuItem
 
 app = Flask(__name__)
 
@@ -10,20 +12,23 @@ app = Flask(__name__)
 def home(restaurant_id):
     repository = RestaurantsRepository()
     items = repository.get_menu(restaurant_id)
-    output = ""
-    for item in items:
-        output += item.name
-        output += "<br/>"
-        output += item.price
-        output += "<br/>"
-        output += item.description
-        output += "<br/> <br/>"
-    return output
+    restaurant = repository.get_restaurant_by_id(restaurant_id)
+    return render_template('menu.html', restaurant=restaurant, items=items)
 
 
-@app.route('/restaurant/<int:restaurant_id>/new/')
+@app.route('/restaurant/<int:restaurant_id>/new/', methods=['GET', 'POST'])
 def new_menu_item(restaurant_id):
-    return "page to create a new menu item. Task 1 complete!"
+    if request.method == 'POST':
+        repository = RestaurantsRepository()
+        new_item = MenuItem(
+            name=request.form['name'],
+            description=request.form['description'],
+            price=request.form['price'],
+            restaurant_id=restaurant_id)
+        repository.new_menu_item(new_item)
+        return redirect(url_for('home', restaurant_id=restaurant_id))
+    else:
+        return render_template("new_menu_item.html", restaurant_id=restaurant_id)
 
 
 @app.route('/restaurant/<int:restaurant_id>/<int:menu_id>/edit/')

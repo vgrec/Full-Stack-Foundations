@@ -20,6 +20,10 @@ class RestaurantsRepository:
         self.session.add(Restaurant(name=restaurant_name))
         self.session.commit()
 
+    def new_menu_item(self, menu_item):
+        self.session.add(menu_item)
+        self.session.commit()
+
     def get_restaurant_by_id(self, id):
         return self.session.query(Restaurant).filter_by(id=id).first()
 
